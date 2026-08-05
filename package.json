@@ -1,12 +1,10 @@
 {
   "name": "@minia2a/elizaos-plugin-minia2a",
-  "version": "0.1.1",
-  "description": "ElizaOS plugin for minia2a.uk — discover and call 299+ x402 pay-per-call APIs from your agent",
+  "version": "0.1.2",
+  "description": "ElizaOS plugin for the minia2a.uk marketplace — 299+ x402 pay-per-call APIs across crypto, web, AI, and data. 15 free trials per endpoint. USDC on Base.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -18,10 +16,19 @@
     "x402",
     "minia2a",
     "agent-payments",
+    "pay-per-call",
     "usdc",
+    "base",
     "m2m",
     "ai-agent",
-    "marketplace"
+    "marketplace",
+    "micropayments",
+    "web-scraping",
+    "crypto-data",
+    "captcha-solving",
+    "ai-inference",
+    "api-discovery",
+    "agent-economy"
   ],
   "author": "minia2a.uk",
   "license": "MIT",

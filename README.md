@@ -1,18 +1,19 @@
 # @minia2a/elizaos-plugin-minia2a
 
-**ElizaOS plugin for [minia2a.uk](https://minia2a.uk)** — discover and call 299+ x402 pay-per-call APIs directly from your AI agent.
+**The marketplace plugin for ElizaOS agents** — discover, try, and pay for 299+ x402 APIs across crypto, web, AI, and data. USDC on Base.
 
-## What This Plugin Does
+> Unlike single-vendor x402 plugins that bundle a fixed set of endpoints, this plugin connects your agent to the **entire minia2a.uk marketplace** — 299+ services from dozens of providers, with live discovery, free trials, and transparent pricing.
 
-Your ElizaOS agent gets 3 new abilities:
+## Why This Plugin
 
-| Action | What it does |
-|--------|-------------|
-| `SEARCH_APIS` | Search 299+ APIs by keyword or category |
-| `CALL_API` | Call any endpoint with auto-trial (15 free calls per API) |
-| `LIST_POPULAR_APIS` | Browse trending/most-used services |
-
-Plus a provider that injects live marketplace stats into the agent's context.
+| Feature | Fixed-Endpoint Plugins | This Plugin |
+|---------|----------------------|-------------|
+| Services | 8–75 endpoints | **299+ across categories** |
+| Discovery | Pre-bundled at build time | **Live marketplace search** |
+| Free trials | Sometimes | **15 free calls per endpoint** |
+| New services | Wait for plugin update | **Available instantly** |
+| Provider diversity | Single vendor | **Dozens of providers** |
+| Payment | USDC on chain | **USDC on Base (~3¢ gas)** |
 
 ## Install
 
@@ -20,7 +21,7 @@ Plus a provider that injects live marketplace stats into the agent's context.
 npm install @minia2a/elizaos-plugin-minia2a
 ```
 
-## Configure
+## Quick Start
 
 Add to your agent's `character.json`:
 
@@ -37,38 +38,49 @@ Add to your agent's `character.json`:
 }
 ```
 
-## Usage
+## Actions
 
-Once configured, your agent can:
+| Action | What it does | Example prompt |
+|--------|-------------|----------------|
+| `SEARCH_APIS` | Search 299+ APIs by keyword or category | "Find APIs that can scrape websites" |
+| `CALL_API` | Call any endpoint with auto-trial | "Get the current gas price on Base" |
+| `LIST_POPULAR_APIS` | Browse trending services | "What are the most used APIs?" |
 
-**Search for APIs:**
-> "Search for APIs that can scrape websites"
+## Provider
 
-**Browse the marketplace:**
-> "What APIs are available?"
-
-**Call an endpoint:**
-> "Call the /x402/gas endpoint" or "Try the gas price API"
+The `MINIA2A_MARKETPLACE` provider injects live marketplace context into every agent interaction — service counts, popular endpoints, trial availability, and pricing.
 
 ## x402 Payment Flow
 
-This plugin handles the full x402 flow:
-
-1. Agent requests an endpoint → gets **HTTP 402 Payment Required** with price + wallet address
+1. Agent requests endpoint → gets `HTTP 402 Payment Required` with price + wallet
 2. Agent auto-signs USDC on Base (if `paymentPrivateKey` configured)
-3. Agent retries with payment proof → receives result
+3. Agent retries with `Authorization: x402 <signed-tx>` → receives result
+4. Receipt returned in `X-Receipt` header for audit trail
 
-Without a payment key configured, the agent uses **free trials** (15 calls per endpoint).
+**Without a payment key:** the agent uses free trials — 15 calls per endpoint, zero setup, no wallet.
 
-## Real Data
+## Categories
 
-minia2a.uk currently has **299 services** with **8,144+ trials** from **318 developers** across categories including:
+- 🤖 **AI/LLM** — text generation, classification, translation, summarization
+- 🔗 **Web** — scraping, search, email verification, DNS, HTTP analysis
+- 💰 **Crypto** — gas prices, wallet intel, token security, DEX data, Polymarket
+- 🔐 **Security** — CAPTCHA solving, domain intel, SSL checks, OSINT
+- 📊 **Data** — enrichment, validation, formatting, CSV/JSON conversion
+- 🛠️ **Dev Tools** — code review, regex, UUID, hashing, JWT decode
 
-- 🤖 AI/LLM (text generation, classification, translation)
-- 🔗 Web (scraping, search, email verification)
-- 💰 Crypto (gas, prices, wallet intel, token security)
-- 🔐 Security (CAPTCHA solving, domain intel, audits)
-- 📊 Data (enrichment, validation, formatting)
+## Pricing
+
+- **Free trial:** 15 calls per endpoint (`?trial=1`)
+- **Paid calls:** Priced per endpoint (typically $0.001–$0.10)
+- **Platform fee:** 5% (transparent, no hidden costs)
+- **Credits:** 1 USDC = 200 credits, no subscription, no minimum
+- **Settlement:** USDC on Base (~3¢ gas, ~2s confirmation)
+
+## Related
+
+- [minia2a.uk](https://minia2a.uk) — The marketplace
+- [@minia2a/sdk](https://www.npmjs.com/package/@minia2a/sdk) — CLI for x402 developers
+- [x402.org](https://x402.org) — The payment protocol
 
 ## License
 
