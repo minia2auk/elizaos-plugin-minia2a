@@ -1,10 +1,12 @@
 {
   "name": "@minia2a/elizaos-plugin-minia2a",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "ElizaOS plugin for minia2a.uk — discover and call 299+ x402 pay-per-call APIs from your agent",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -32,6 +34,6 @@
   },
   "devDependencies": {
     "@elizaos/core": "^0.25.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.3.3"
   }
 }
