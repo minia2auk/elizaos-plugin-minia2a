@@ -1,6 +1,6 @@
 {
   "name": "@minia2a/elizaos-plugin-minia2a",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "ElizaOS plugin for the minia2a.uk marketplace \u2014 1,680+ x402 pay-per-call APIs across crypto, web, AI, and data. 5 free trial calls per wallet. USDC on Base.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -36,7 +36,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/minia2a-org/elizaos-plugin-minia2a"
+    "url": "https://github.com/minia2auk/elizaos-plugin-minia2a"
   },
   "peerDependencies": {
     "@elizaos/core": ">=0.1.0"
