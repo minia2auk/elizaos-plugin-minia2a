@@ -98,7 +98,7 @@ export const searchApisAction: Action = {
             `${i + 1}. **${s.name}** (${s.id}) — ${s.price || 0}¢/call → ${s.description?.slice(0, 80) || "No description"}`
         ),
         "",
-        `💡 Each endpoint includes **15 free trial calls**. Use CALL_API to try one.`,
+        `💡 Each wallet gets **5 free trial calls**. Use CALL_API to try one.`,
         `📋 Full catalog: ${baseUrl}`,
       ];
 
@@ -124,7 +124,7 @@ export const searchApisAction: Action = {
       {
         user: "{{user2}}",
         content: {
-          text: "📡 **minia2a.uk Search** — found 3 services for web scraping. Top: x402-web-scrape (5¢/call), x402-web-retrieve (3¢/call). Each has 15 free trials.",
+          text: "📡 **minia2a.uk Search** — found 3 services for web scraping. Top: x402-web-scrape (5¢/call), x402-web-retrieve (3¢/call). Each wallet gets 5 free trials.",
           action: "SEARCH_APIS",
         },
       },
@@ -137,7 +137,7 @@ export const searchApisAction: Action = {
       {
         user: "{{user2}}",
         content: {
-          text: "📡 Found crypto APIs: x402-price-oracle (3¢/call), x402-crypto-price (2¢/call). Try any with 15 free calls.",
+          text: "📡 Found crypto APIs: x402-price-oracle (3¢/call), x402-crypto-price (2¢/call). Try any with 5 free trial calls.",
           action: "SEARCH_APIS",
         },
       },

@@ -35,10 +35,22 @@ export interface Minia2aApiResponse {
 export interface Minia2aPluginConfig {
   /** Base URL of the minia2a marketplace (default: https://minia2a.uk) */
   baseUrl?: string;
-  /** Whether to auto-use free trials when available */
+  /**
+   * Reserved. Accepted and ignored: this version has no signed-trial path, so
+   * there is no auto-trial to toggle. It previously set an `x402-trial` request
+   * header the gateway ignores.
+   */
   autoTrial?: boolean;
-  /** Maximum price in USD the agent is authorized to pay per call (0 = trials only) */
+  /**
+   * Accepted and NOT enforced. This version never settles a payment, so there
+   * is nothing to cap; the value is not read anywhere.
+   */
   maxPricePerCall?: number;
-  /** Wallet private key for signing x402 payments on Base */
+  /**
+   * Accepted and NOT used. No x402 signer is wired to it — nothing is signed
+   * and no USDC is sent, whether or not this is set.
+   */
   paymentPrivateKey?: string;
+  /** Maximum total spend in USD cents allowed per agent session (0 = unlimited) */
+  maxSpendPerSession?: number;
 }

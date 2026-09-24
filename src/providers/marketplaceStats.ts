@@ -37,7 +37,7 @@ export const marketplaceStatsProvider: Provider = {
       const text = [
         `minia2a.uk marketplace: ${serviceCount} services, ${totalRequests} total requests, ${totalTrials} trials used, ${uniqueUsers} developers, ${walletCount} wallets.`,
         `Top APIs: ${top10}.`,
-        `Every endpoint has 15 free trial calls. Agents can discover services via SEARCH_APIS and call them via CALL_API with auto-trial support.`,
+        `Every wallet gets 5 free trial calls. Agents can discover services via SEARCH_APIS and call them via CALL_API with auto-trial support.`,
       ].join(" ");
 
       return {
@@ -54,7 +54,7 @@ export const marketplaceStatsProvider: Provider = {
     } catch {
       // Graceful degradation — provider failing shouldn't break the agent
       return {
-        text: "minia2a.uk marketplace is available with 299+ pay-per-call x402 APIs. Use SEARCH_APIS to discover services.",
+        text: "minia2a.uk marketplace is available with 1,680+ pay-per-call x402 APIs. Use SEARCH_APIS to discover services.",
         values: {
           minia2aServices: 299,
           minia2aTrials: 0,

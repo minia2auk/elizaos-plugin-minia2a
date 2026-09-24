@@ -1,7 +1,44 @@
 import { Action, IAgentRuntime, Memory, State, HandlerCallback } from "@elizaos/core";
 import { Minia2aPluginConfig } from "../types";
+import { initSpendingTracker, canAfford, recordSpend } from "../spending";
 
 const DEFAULT_BASE_URL = "https://minia2a.uk";
+
+/**
+ * A 402 from the gateway carries the canonical challenge in the
+ * `payment-required` response header: base64(JSON) with an `accepts[]` array.
+ * `WWW-Authenticate` / `X-Payment-Required` are legacy shapes this gateway does
+ * not send; reading only those (as an earlier version did) left the price blank.
+ */
+function readChallenge(res: Response): {
+  price?: string;
+  error?: string;
+  nextSteps: string[];
+} {
+  const raw = res.headers.get("payment-required") || res.headers.get("PAYMENT-REQUIRED");
+  if (!raw) return { nextSteps: [] };
+  try {
+    const json = JSON.parse(Buffer.from(raw, "base64").toString("utf8"));
+    const accept = Array.isArray(json.accepts) ? json.accepts[0] : undefined;
+    const amount = accept?.amount;
+    const usd = amount != null ? Number(amount) / 1e6 : NaN;
+    return {
+      price: Number.isFinite(usd) ? `${usd} USDC on ${accept?.network || "?"}` : undefined,
+      error: typeof json.message === "string" ? json.message : undefined,
+      nextSteps: Array.isArray(json.nextSteps)
+        ? json.nextSteps.filter((s: unknown): s is string => typeof s === "string")
+        : [],
+    };
+  } catch {
+    return { nextSteps: [] };
+  }
+}
+
+const TRIAL_HOW_TO =
+  "\n\n**Free trials are wallet-based.** Sign `minia2a trial:<wallet>:<service-id>:<unixSeconds>`" +
+  " (EIP-191), then send `?wallet=` together with the `X-Wallet-Signature` and `X-Trial-Timestamp`" +
+  " headers to draw 5 free calls — no registration. This plugin does not sign that message for you." +
+  " A bare `?trial=1` draws nothing; the gateway says so in its own AGENTS.md.";
 
 export const callApiAction: Action = {
   name: "CALL_API",
@@ -16,7 +53,7 @@ export const callApiAction: Action = {
     "MINIA2A_CALL",
   ],
   description:
-    "Call an x402 API endpoint on minia2a.uk. Uses free trials automatically (15 per endpoint). For paid calls, handles the HTTP 402 → pay USDC → retry flow.",
+    "Call an x402 API endpoint on minia2a.uk and return its response. On HTTP 402 it reports the price and the exact signed-trial recipe. It does not sign trials and does not settle payments.",
 
   validate: async (_runtime: IAgentRuntime, message: Memory, _state?: State) => {
     const text = message.content?.text?.toLowerCase() || "";
@@ -44,7 +81,12 @@ export const callApiAction: Action = {
   ) => {
     const config = (runtime.getSetting("MINIA2A_CONFIG") as Minia2aPluginConfig) || {};
     const baseUrl = config.baseUrl || DEFAULT_BASE_URL;
-    const autoTrial = config.autoTrial !== false; // default true
+    const maxSpend = config.maxSpendPerSession || 0;
+
+    // Initialize session spending tracker if budget is configured
+    if (maxSpend > 0) {
+      initSpendingTracker(runtime.agentId, maxSpend);
+    }
 
     try {
       const text = message.content?.text || "";
@@ -86,20 +128,17 @@ export const callApiAction: Action = {
         }
       }
 
-      // Step 1: Send initial request (with trial header if auto-trial)
+      // Step 1: Send the request.
+      // There is no request header that grants a trial. Older versions set
+      // `x402-trial: true`, which the gateway ignores — it returned a 402
+      // byte-identical to the unheadered baseline, under a "with free trial"
+      // message. Trials are drawn by a signed wallet (see TRIAL_HOW_TO).
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
-      if (autoTrial) {
-        headers["x402-trial"] = "true";
-      }
 
       if (callback) {
-        callback({
-          text: autoTrial
-            ? `🆓 Calling ${endpoint} with free trial...`
-            : `📡 Calling ${endpoint}...`,
-        });
+        callback({ text: `📡 Calling ${endpoint}...` });
       }
 
       let res = await fetch(`${baseUrl}${endpoint}`, {
@@ -112,33 +151,49 @@ export const callApiAction: Action = {
 
       // Step 2: Handle HTTP 402 Payment Required
       if (res.status === 402) {
-        const paymentHeader =
-          res.headers.get("WWW-Authenticate") ||
-          res.headers.get("X-Payment-Required") ||
-          "";
+        const challenge = readChallenge(res);
+        const head =
+          `💳 **Payment Required**\n\nEndpoint: ${endpoint}` +
+          (challenge.price ? `\nPrice: ${challenge.price}` : "") +
+          (challenge.error ? `\nGateway: ${challenge.error}` : "") +
+          (challenge.nextSteps.length
+            ? `\n\nGateway next steps:\n${challenge.nextSteps.map((s) => `- ${s}`).join("\n")}`
+            : "");
 
         if (!config.paymentPrivateKey) {
           return {
-            text: `💳 **Payment Required**\n\nEndpoint: ${endpoint}\nPrice: ${paymentHeader}\n\nThis endpoint requires payment. Configure your wallet private key in MINIA2A_CONFIG.paymentPrivateKey to auto-pay, or use free trials (15 calls per endpoint).`,
+            text: head + TRIAL_HOW_TO,
             success: false,
             paymentRequired: true,
-            paymentDetails: paymentHeader,
+            paymentDetails: challenge.price,
           };
         }
 
-        // If we have a payment key, handle the payment flow
-        if (callback) {
-          callback({ text: `💳 Payment required — auto-signing USDC on Base...` });
+        // Budget check before payment
+        if (maxSpend > 0) {
+          const budgetCheck = canAfford(runtime.agentId, 1); // approximate 1¢ minimum check
+          if (!budgetCheck.allowed) {
+            return {
+              text: `🛑 ${budgetCheck.reason}\n\nUse a signed wallet trial (see below) or increase maxSpendPerSession in config.` + TRIAL_HOW_TO,
+              success: false,
+              budgetExceeded: true,
+            };
+          }
         }
 
-        // Extract payment address and amount from 402 headers
-        // The actual USDC signing would use ethers.js or viem
-        // For now, return payment instructions
+        // `paymentPrivateKey` is accepted by this plugin but had no payment
+        // signer behind it: an earlier version printed "auto-signing USDC on
+        // Base..." and then returned instructions without signing anything.
+        // Report that plainly instead of implying a settlement.
         return {
-          text: `💳 **Payment Required**\n\nEndpoint: ${endpoint}\nPayment details: ${paymentHeader}\n\n💡 Tip: Use free trials first — each endpoint has 15 free calls. Set \`autoTrial: true\` in config.`,
+          text:
+            head +
+            "\n\n**No payment was made.** `paymentPrivateKey` is configured, but this version has no" +
+            " x402 signer wired to it — nothing was signed and no USDC was sent." +
+            TRIAL_HOW_TO,
           success: false,
           paymentRequired: true,
-          paymentDetails: paymentHeader,
+          paymentDetails: challenge.price,
         };
       }
 
@@ -158,10 +213,14 @@ export const callApiAction: Action = {
           : JSON.stringify(data, null, 2)
         : "OK (no response body)";
 
+      // The gateway names this `x-minia2a-receipt` (not `X-Receipt`).
+      const receipt = res.headers.get("x-minia2a-receipt");
+
       return {
-        text: `✅ **${endpoint}** response:\n\n\`\`\`json\n${resultText.slice(0, 2000)}\n\`\`\`${resultText.length > 2000 ? "\n\n...(truncated)" : ""}`,
+        text: `✅ **${endpoint}** response:\n\n\`\`\`json\n${resultText.slice(0, 2000)}\n\`\`\`${resultText.length > 2000 ? "\n\n...(truncated)" : ""}${receipt ? `\n\nReceipt: \`${receipt}\`` : ""}`,
         success: true,
         data,
+        receipt: receipt || undefined,
       };
     } catch (error: any) {
       return {
@@ -193,7 +252,7 @@ export const callApiAction: Action = {
       {
         user: "{{user2}}",
         content: {
-          text: "🆓 Called /x402/gas with free trial. Gas: 12 Gwei on Base.",
+          text: "💳 /x402/gas returned HTTP 402 — 0.5 USDC on eip155:8453. To draw a free trial, sign \"minia2a trial:<wallet>:x402-gas:<unixSeconds>\" and send it with ?wallet= and the X-Wallet-Signature / X-Trial-Timestamp headers.",
           action: "CALL_API",
         },
       },

@@ -1,19 +1,21 @@
 # @minia2a/elizaos-plugin-minia2a
 
-**The marketplace plugin for ElizaOS agents** — discover, try, and pay for 299+ x402 APIs across crypto, web, AI, and data. USDC on Base.
+**The marketplace plugin for ElizaOS agents** — discover and call 1,680+ x402 APIs across crypto, web, AI, and data, with live pricing surfaced on every HTTP 402. USDC on Base.
 
-> Unlike single-vendor x402 plugins that bundle a fixed set of endpoints, this plugin connects your agent to the **entire minia2a.uk marketplace** — 299+ services from dozens of providers, with live discovery, free trials, and transparent pricing.
+> Unlike single-vendor x402 plugins that bundle a fixed set of endpoints, this plugin connects your agent to the **entire minia2a.uk marketplace** — 1,680+ services from dozens of providers, with live discovery and transparent pricing.
+
+> **Scope of this version:** it does not sign trials and does not settle payments. `CALL_API` returns the endpoint's response, or on 402 reports the price plus the exact signed-trial recipe for your agent to follow. Neither the trial message nor a USDC payment is signed for you.
 
 ## Why This Plugin
 
 | Feature | Fixed-Endpoint Plugins | This Plugin |
 |---------|----------------------|-------------|
-| Services | 8–75 endpoints | **299+ across categories** |
+| Services | 8–75 endpoints | **1,680+ across categories** |
 | Discovery | Pre-bundled at build time | **Live marketplace search** |
-| Free trials | Sometimes | **15 free calls per endpoint** |
+| Free trials | Sometimes | **5 free trial calls per signed wallet** (platform-side; sign the message yourself) |
 | New services | Wait for plugin update | **Available instantly** |
 | Provider diversity | Single vendor | **Dozens of providers** |
-| Payment | USDC on chain | **USDC on Base (~3¢ gas)** |
+| Payment | USDC on chain | **x402 / USDC on Base** (not settled by this version) |
 
 ## Install
 
@@ -30,9 +32,8 @@ Add to your agent's `character.json`:
   "plugins": ["@minia2a/elizaos-plugin-minia2a"],
   "settings": {
     "MINIA2A_CONFIG": {
-      "autoTrial": true,
-      "maxPricePerCall": 0.10,
-      "baseUrl": "https://minia2a.uk"
+      "baseUrl": "https://minia2a.uk",
+      "maxSpendPerSession": 500
     }
   }
 }
@@ -42,22 +43,42 @@ Add to your agent's `character.json`:
 
 | Action | What it does | Example prompt |
 |--------|-------------|----------------|
-| `SEARCH_APIS` | Search 299+ APIs by keyword or category | "Find APIs that can scrape websites" |
-| `CALL_API` | Call any endpoint with auto-trial | "Get the current gas price on Base" |
+| `SEARCH_APIS` | Search 1,680+ APIs by keyword or category | "Find APIs that can scrape websites" |
+| `CALL_API` | Call any endpoint; on 402 return its price + the signed-trial recipe | "Get the current gas price on Base" |
 | `LIST_POPULAR_APIS` | Browse trending services | "What are the most used APIs?" |
 
 ## Provider
 
 The `MINIA2A_MARKETPLACE` provider injects live marketplace context into every agent interaction — service counts, popular endpoints, trial availability, and pricing.
 
-## x402 Payment Flow
+## What happens on HTTP 402
 
-1. Agent requests endpoint → gets `HTTP 402 Payment Required` with price + wallet
-2. Agent auto-signs USDC on Base (if `paymentPrivateKey` configured)
-3. Agent retries with `Authorization: x402 <signed-tx>` → receives result
-4. Receipt returned in `X-Receipt` header for audit trail
+1. Agent calls an endpoint → the gateway answers `402 Payment Required`.
+2. The challenge is in the **`payment-required` response header** (base64 JSON with an
+   `accepts[]` array). `CALL_API` decodes it and reports the price, e.g. `0.5 USDC on eip155:8453`.
+3. The agent then either **pays via x402 itself** (`PAYMENT-SIGNATURE` V2 / `X-PAYMENT` V1)
+   or **draws a free trial** with a signed wallet — see below.
+4. A successful call carries a receipt in the **`x-minia2a-receipt`** header, which `CALL_API`
+   surfaces in its reply.
 
-**Without a payment key:** the agent uses free trials — 15 calls per endpoint, zero setup, no wallet.
+This plugin performs steps 1–2 and 4. It does **not** perform step 3: no trial signature and no
+payment is produced for you. `paymentPrivateKey` is accepted by the config but has no signer
+behind it, so setting it changes nothing.
+
+### Free trials (5 per signed wallet, no registration)
+
+Trials are wallet-based, not a URL parameter. A bare `?trial=1` draws nothing — the gateway
+documents that explicitly in its [AGENTS.md](https://minia2a.uk/AGENTS.md). To draw one:
+
+```
+message = "minia2a trial:" + wallet + ":" + serviceId + ":" + unixSeconds    # EIP-191
+GET /x402/<svc>?wallet=<wallet>
+  X-Wallet-Signature: <signature>
+  X-Trial-Timestamp: <unixSeconds>
+# → 200 + x-trial-remaining: 4, x-trial-max: 5
+```
+
+`serviceId` is the catalog `id` (e.g. `x402-gas`), **not** the URL path segment (`gas`).
 
 ## Categories
 
@@ -70,10 +91,10 @@ The `MINIA2A_MARKETPLACE` provider injects live marketplace context into every a
 
 ## Pricing
 
-- **Free trial:** 15 calls per endpoint (`?trial=1`)
-- **Paid calls:** Priced per endpoint (typically $0.001–$0.10)
+- **Free trial:** 5 calls per signed wallet, one allowance across the whole catalog — see above
+- **Paid calls:** Priced per endpoint (typically $0.001–$0.10), charged in USDC per call
 - **Platform fee:** 5% (transparent, no hidden costs)
-- **Credits:** 1 USDC = 200 credits, no subscription, no minimum
+- **No credits, no subscription, no minimum** — the platform's unit is USDC (microUSDC balances)
 - **Settlement:** USDC on Base (~3¢ gas, ~2s confirmation)
 
 ## Related

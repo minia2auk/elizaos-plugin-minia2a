@@ -1,10 +1,12 @@
 {
   "name": "@minia2a/elizaos-plugin-minia2a",
-  "version": "0.1.2",
-  "description": "ElizaOS plugin for the minia2a.uk marketplace — 299+ x402 pay-per-call APIs across crypto, web, AI, and data. 15 free trials per endpoint. USDC on Base.",
+  "version": "0.2.6",
+  "description": "ElizaOS plugin for the minia2a.uk marketplace \u2014 1,680+ x402 pay-per-call APIs across crypto, web, AI, and data. 5 free trial calls per wallet. USDC on Base.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

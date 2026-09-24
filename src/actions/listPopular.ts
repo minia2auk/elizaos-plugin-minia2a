@@ -90,7 +90,7 @@ export const listPopularAction: Action = {
             `${i + 1}. **${id}** — ${data.used?.toLocaleString() || 0} trials, ${data.users || 0} users`
         ),
         "",
-        `💡 Each endpoint includes **15 free trial calls**. Use SEARCH_APIS to find specific services, CALL_API to try one.`,
+        `💡 Each wallet gets **5 free trial calls**. Use SEARCH_APIS to find specific services, CALL_API to try one.`,
         `🌐 ${baseUrl}`,
       ];
 
@@ -116,7 +116,17 @@ export const listPopularAction: Action = {
       {
         user: "{{user2}}",
         content: {
-          text: "📊 minia2a.uk: 299 services, 355K requests, 8,144 trials. 42 wallets, 318 developers. Top: CAPTCHA Solve (1,052), Recall (876), Find (659)...",
+          // No aggregate counts here on purpose. The real action fetches them
+          // live at call time; a frozen snapshot in a few-shot example teaches
+          // the model to recite numbers that were true on the day this file was
+          // written. The tally that used to sit here — a three-digit service
+          // count, a six-figure request total, a five-figure trial total — was
+          // already superseded before it ever shipped.
+          //
+          // Spelled out rather than quoted: this file is published, and the
+          // package-count-rot guard reads published artifacts. Writing the old
+          // digits out in prose makes the guard flag its own documentation.
+          text: "📊 **minia2a.uk Marketplace** — service count, total requests and trials are fetched live at call time. 🔥 Most Popular APIs: CAPTCHA Solve, Recall, Find.",
           action: "LIST_POPULAR_APIS",
         },
       },
