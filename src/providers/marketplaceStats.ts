@@ -54,7 +54,7 @@ export const marketplaceStatsProvider: Provider = {
     } catch {
       // Graceful degradation — provider failing shouldn't break the agent
       return {
-        text: "minia2a.uk marketplace is available with 1,680+ pay-per-call x402 APIs. Use SEARCH_APIS to discover services.",
+        text: "minia2a.uk marketplace is available with pay-per-call x402 APIs (live count at https://minia2a.uk/api/services). Use SEARCH_APIS to discover services.",
         values: {
           minia2aServices: 299,
           minia2aTrials: 0,

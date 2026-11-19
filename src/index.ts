@@ -18,7 +18,7 @@ export { initSpendingTracker, getSpending, getSpendSummary, canAfford, recordSpe
  * minia2a.uk plugin for ElizaOS
  *
  * Gives your ElizaOS agent the ability to:
- * - Search 1,680+ x402 pay-per-call APIs (SEARCH_APIS)
+ * - Search the live catalog of x402 pay-per-call APIs (SEARCH_APIS)
  * - Call any endpoint and, on 402, get its price + the signed-trial recipe (CALL_API)
  * - Browse trending/popular services (LIST_POPULAR_APIS)
  * - Track API spending per session (VIEW_SPENDING)
@@ -52,7 +52,7 @@ export const minia2aPlugin: Plugin = {
   name: "@minia2a/elizaos-plugin-minia2a",
   npmName: "@minia2a/elizaos-plugin-minia2a",
   description:
-    "Discover and call 1,680+ x402 pay-per-call APIs from minia2a.uk. Live marketplace search, spending tracking, and the signed-trial recipe on HTTP 402. This version does not sign trials and does not settle payments.",
+    "Discover and call x402 pay-per-call APIs from minia2a.uk. Live marketplace search, spending tracking, and the signed-trial recipe on HTTP 402. This version does not sign trials and does not settle payments.",
 
   config: {
     baseUrl: "https://minia2a.uk",
