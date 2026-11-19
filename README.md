@@ -1,8 +1,8 @@
 # @minia2a/elizaos-plugin-minia2a
 
-**The marketplace plugin for ElizaOS agents** — discover and call 1,680+ x402 APIs across crypto, web, AI, and data, with live pricing surfaced on every HTTP 402. USDC on Base.
+**The marketplace plugin for ElizaOS agents** — discover and call x402 APIs across crypto, web, AI, and data, with live pricing surfaced on every HTTP 402. USDC on Base.
 
-> Unlike single-vendor x402 plugins that bundle a fixed set of endpoints, this plugin connects your agent to the **entire minia2a.uk marketplace** — 1,680+ services from dozens of providers, with live discovery and transparent pricing.
+> Unlike single-vendor x402 plugins that bundle a fixed set of endpoints, this plugin connects your agent to the **entire minia2a.uk marketplace** — its whole live catalog from dozens of providers (current count: [https://minia2a.uk/api/services](https://minia2a.uk/api/services)), with live discovery and transparent pricing.
 
 > **Scope of this version:** it does not sign trials and does not settle payments. `CALL_API` returns the endpoint's response, or on 402 reports the price plus the exact signed-trial recipe for your agent to follow. Neither the trial message nor a USDC payment is signed for you.
 
@@ -10,7 +10,7 @@
 
 | Feature | Fixed-Endpoint Plugins | This Plugin |
 |---------|----------------------|-------------|
-| Services | 8–75 endpoints | **1,680+ across categories** |
+| Services | 8–75 endpoints | **Live catalog, across categories** |
 | Discovery | Pre-bundled at build time | **Live marketplace search** |
 | Free trials | Sometimes | **5 free trial calls per signed wallet** (platform-side; sign the message yourself) |
 | New services | Wait for plugin update | **Available instantly** |
@@ -43,7 +43,7 @@ Add to your agent's `character.json`:
 
 | Action | What it does | Example prompt |
 |--------|-------------|----------------|
-| `SEARCH_APIS` | Search 1,680+ APIs by keyword or category | "Find APIs that can scrape websites" |
+| `SEARCH_APIS` | Search the live catalog by keyword or category | "Find APIs that can scrape websites" |
 | `CALL_API` | Call any endpoint; on 402 return its price + the signed-trial recipe | "Get the current gas price on Base" |
 | `LIST_POPULAR_APIS` | Browse trending services | "What are the most used APIs?" |
 
